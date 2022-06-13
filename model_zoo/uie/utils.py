@@ -132,68 +132,8 @@ def reader(data_path, max_seq_len=512):
                     "The value of max_seq_len is too small, please set a larger value"
                 )
             max_content_len = max_seq_len - len(prompt) - 3
-            if len(content) <= max_content_len:
-                yield json_line
-            else:
-                result_list = json_line['result_list']
-                json_lines = []
-                accumulate = 0
-                while True:
-                    cur_result_list = []
-
-                    for result in result_list:
-                        if result['start'] + 1 <= max_content_len < result[
-                                'end']:
-                            max_content_len = result['start']
-                            break
-
-                    cur_content = content[:max_content_len]
-                    res_content = content[max_content_len:]
-
-                    while True:
-                        if len(result_list) == 0:
-                            break
-                        elif result_list[0]['end'] <= max_content_len:
-                            if result_list[0]['end'] > 0:
-                                cur_result = result_list.pop(0)
-                                cur_result_list.append(cur_result)
-                            else:
-                                cur_result_list = [
-                                    result for result in result_list
-                                ]
-                                break
-                        else:
-                            break
-
-                    json_line = {
-                        'content': cur_content,
-                        'result_list': cur_result_list,
-                        'prompt': prompt
-                    }
-                    json_lines.append(json_line)
-
-                    for result in result_list:
-                        if result['end'] <= 0:
-                            break
-                        result['start'] -= max_content_len
-                        result['end'] -= max_content_len
-                    accumulate += max_content_len
-                    max_content_len = max_seq_len - len(prompt) - 3
-                    if len(res_content) == 0:
-                        break
-                    elif len(res_content) < max_content_len:
-                        json_line = {
-                            'content': res_content,
-                            'result_list': result_list,
-                            'prompt': prompt
-                        }
-                        json_lines.append(json_line)
-                        break
-                    else:
-                        content = res_content
-
-                for json_line in json_lines:
-                    yield json_line
+            json_line['content'] = content[:max_content_len]
+            yield json_line
 
 
 def add_negative_example(examples, texts, prompts, label_set, negative_ratio):
