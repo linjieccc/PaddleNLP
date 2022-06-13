@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import re
 import numpy as np
 import paddle
 from ..datasets import load_dataset
@@ -325,39 +326,10 @@ class UIETask(Task):
 
     def _auto_joiner(self, short_results, short_inputs, input_mapping):
         concat_results = []
-        is_cls_task = False
-        for short_result in short_results:
-            if short_result == []:
-                continue
-            elif 'start' not in short_result[0].keys(
-            ) and 'end' not in short_result[0].keys():
-                is_cls_task = True
-                break
-            else:
-                break
         for k, vs in input_mapping.items():
-            if is_cls_task:
-                cls_options = {}
-                single_results = []
-                for v in vs:
-                    if len(short_results[v]) == 0:
-                        continue
-                    if short_results[v][0]['text'] not in cls_options.keys():
-                        cls_options[short_results[v][0][
-                            'text']] = [1, short_results[v][0]['probability']]
-                    else:
-                        cls_options[short_results[v][0]['text']][0] += 1
-                        cls_options[short_results[v][0]['text']][
-                            1] += short_results[v][0]['probability']
-                if len(cls_options) != 0:
-                    cls_res, cls_info = max(cls_options.items(),
-                                            key=lambda x: x[1])
-                    concat_results.append([{
-                        'text': cls_res,
-                        'probability': cls_info[1] / cls_info[0]
-                    }])
-                else:
-                    concat_results.append([])
+            if self._is_cls_task:
+                # Trucation based on max_seq_len is enable for classification task with document-level input
+                concat_results.append(short_results[0])
             else:
                 offset = 0
                 single_results = []
@@ -407,6 +379,10 @@ class UIETask(Task):
             input_map = {}
             cnt = 0
             idx = 0
+            if not re.search(r'\[.*?\]$', node.name):
+                self._is_cls_task = False
+            else:
+                self._is_cls_task = True
             if not node.prefix:
                 for one_data in data:
                     examples.append({
