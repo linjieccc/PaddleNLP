@@ -17,7 +17,7 @@ from dataclasses import dataclass, field
 from functools import partial
 
 import paddle
-from data import DataCollatorForSupervisedDataset, convert_example
+from data import DataCollatorForSupervisedDataset, convert_example, reader
 from modeling import LlamaForCausalLM
 from tokenizer import LlamaTokenizer
 from utils import LlamaTrainer, compute_metrics
@@ -32,6 +32,7 @@ from paddlenlp.utils.log import logger
 @dataclass
 class DataArgument:
     task_name: str = field(default="squad", metadata={"help": "The name of task."})
+    train_path: str = field(default="alpaca_data.json", metadata={"help": "The name of task."})
     src_length: int = field(default=1024, metadata={"help": "The max length of source text."})
     tgt_length: int = field(default=142, metadata={"help": "The max length of target text."})
     min_tgt_length: int = field(default=0, metadata={"help": "The min length of target text."})
@@ -118,13 +119,11 @@ def main():
     tokenizer.padding_side = "left"
 
     # Load the dataset.
-    train_ds, dev_ds = load_dataset(data_args.task_name, splits=["train_v1", "dev_v1"])
+    train_ds = load_dataset(reader, data_path=data_args.train_path, lazy=False)
 
     trans_func = partial(convert_example, tokenizer=tokenizer, data_args=data_args)
     train_ds = train_ds.map(partial(trans_func))
-    dev_ds = dev_ds.map(partial(trans_func))
     collate_fn = DataCollatorForSupervisedDataset(tokenizer)
-    # collate_fn = DataCollatorForSeq2Seq(tokenizer)
 
     def compute_metrics_trainer(eval_preds, tokenizer):
         all_preds = []
@@ -145,7 +144,7 @@ def main():
         model=model,
         args=training_args,
         train_dataset=train_ds,
-        eval_dataset=dev_ds,
+        eval_dataset=None,
         tokenizer=tokenizer,
         compute_metrics=compute_metrics_func,
         do_generation=True,

@@ -13,6 +13,9 @@
 # limitations under the License.
 
 import copy
+import io
+import json
+import os
 from dataclasses import dataclass
 from typing import Dict, List
 
@@ -21,6 +24,69 @@ import paddle
 from paddlenlp.transformers.tokenizer_utils_base import PretrainedTokenizerBase
 
 IGNORE_INDEX = -100
+
+
+def _make_w_io_base(f, mode: str):
+    if not isinstance(f, io.IOBase):
+        f_dirname = os.path.dirname(f)
+        if f_dirname != "":
+            os.makedirs(f_dirname, exist_ok=True)
+        f = open(f, mode=mode)
+    return f
+
+
+def _make_r_io_base(f, mode: str):
+    if not isinstance(f, io.IOBase):
+        f = open(f, mode=mode)
+    return f
+
+
+def jdump(obj, f, mode="w", indent=4, default=str):
+    """Dump a str or dictionary to a file in json format.
+    Args:
+        obj: An object to be written.
+        f: A string path to the location on disk.
+        mode: Mode for opening the file.
+        indent: Indent for storing json dictionaries.
+        default: A function to handle non-serializable entries; defaults to `str`.
+    """
+    f = _make_w_io_base(f, mode)
+    if isinstance(obj, (dict, list)):
+        json.dump(obj, f, indent=indent, default=default)
+    elif isinstance(obj, str):
+        f.write(obj)
+    else:
+        raise ValueError(f"Unexpected type: {type(obj)}")
+    f.close()
+
+
+def jload(f, mode="r"):
+    """Load a .json file into a dictionary."""
+    f = _make_r_io_base(f, mode)
+    jdict = json.load(f)
+    f.close()
+    return jdict
+
+
+def reader(data_path):
+    with open(data_path, "r", encoding="utf-8") as f:
+        json_lines = jload(f)
+        for json_line in json_lines:
+            yield json_line
+
+
+PROMPT_DICT = {
+    "prompt_input": (
+        "Below is an instruction that describes a task, paired with an input that provides further context. "
+        "Write a response that appropriately completes the request.\n\n"
+        "### Instruction:\n{instruction}\n\n### Input:\n{input}\n\n### Response:"
+    ),
+    "prompt_no_input": (
+        "Below is an instruction that describes a task. "
+        "Write a response that appropriately completes the request.\n\n"
+        "### Instruction:\n{instruction}\n\n### Response:"
+    ),
+}
 
 
 def convert_example(example, tokenizer, data_args):
@@ -32,19 +98,15 @@ def convert_example(example, tokenizer, data_args):
     # context that overlaps a bit the context of the previous feature.
     # NOTE: Almost the same functionality as HuggingFace's prepare_train_features function. The main difference is
     # that HugggingFace uses ArrowTable as basic data structure, while we use list of dictionary instead.
-    context = example["context"]
-    question = example["question"]
-    try:
-        answer = example["answers"][0]
-    except:
-        print(example["context"])
-        print(example["question"])
-        print(example["answers"])
-        print(example["answer_starts"])
-        print(example["is_impossible"])
 
-    input_seq = f"answer: {answer} context: {context} </s>"
-    output_seq = f"question: {question} </s>"
+    prompt_input, prompt_no_input = PROMPT_DICT["prompt_input"], PROMPT_DICT["prompt_no_input"]
+
+    if example.get("input", "") != "":
+        input_seq = prompt_input.format_map(example)
+    else:
+        input_seq = prompt_no_input.format_map(example)
+
+    output_seq = example["output"]
 
     source_tokenized = tokenizer(
         input_seq,
