@@ -64,6 +64,7 @@ from .blenderbot.tokenizer import *
 from .blenderbot.configuration import *
 from .blenderbot_small.modeling import *
 from .blenderbot_small.tokenizer import *
+from .blenderbot_small.configuration import *
 from .blip.modeling import *
 from .blip.modeling_text import *
 from .blip.configuration import *
@@ -76,6 +77,7 @@ from .convbert.modeling import *
 from .convbert.tokenizer import *
 from .ctrl.modeling import *
 from .ctrl.tokenizer import *
+from .ctrl.configuration import *
 from .dpt.modeling import *
 from .dpt.configuration import *
 from .dpt.image_processing import *
@@ -125,9 +127,11 @@ from .megatronbert.tokenizer import *
 from .megatronbert.configuration import *
 from .prophetnet.modeling import *
 from .prophetnet.tokenizer import *
+from .prophetnet.configuration import *
 from .mobilebert.configuration import *
 from .mobilebert.modeling import *
 from .mobilebert.tokenizer import *
+from .mpnet.configuration import *
 from .mpnet.modeling import *
 from .mpnet.tokenizer import *
 from .mt5.configuration import *
@@ -142,6 +146,7 @@ from .reformer.tokenizer import *
 from .reformer.configuration import *
 from .rembert.modeling import *
 from .rembert.tokenizer import *
+from .rembert.configuration import *
 from .roformer.modeling import *
 from .roformer.configuration import *
 from .roformer.tokenizer import *
@@ -154,6 +159,7 @@ from .squeezebert.tokenizer import *
 from .t5.modeling import *
 from .t5.tokenizer import *
 from .t5.configuration import *
+from .tinybert.configuration import *
 from .tinybert.modeling import *
 from .tinybert.tokenizer import *
 from .transformer.modeling import *
@@ -221,6 +227,13 @@ from .glm.tokenizer import *
 from .nystromformer.configuration import *
 from .nystromformer.modeling import *
 from .nystromformer.tokenizer import *
+from .bloom.configuration import *
+from .bloom.modeling import *
+from .bloom.tokenizer import *
+from .clipseg.configuration import *
+from .clipseg.modeling import *
+from .clipseg.processing import *
+from .clipseg.image_processing import *
 from .blip_2.modeling import *
 from .blip_2.configuration import *
 from .blip_2.processing import *
