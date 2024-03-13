@@ -728,7 +728,7 @@ TASKS = {
         "default": {"model": "PaddlePaddle/ernie_vil-2.0-base-zh"},
     },
 }
-
+}
 support_schema_list = [
     "uie-base",
     "uie-medium",
